@@ -6,51 +6,52 @@ import (
 	"math/rand"
 	"os"
 	"sort"
+	"sync"
 	"time"
 )
 
-// функция для получения одного случайного числа
-func getRandomNumber(count int, channel chan int) {
-	channel <- 1 + rand.Intn(count)
+// получает случайное число, не превосходящее верхнюю границу bound
+func getRandomNumber(bound int, channel chan int) {
+	channel <- 1 + rand.Intn(bound)
 }
 
-// функция-фильтр для проверки допустимых чисел, возвращает обновленные: словарь использованных чисел и срез-результат
-// flows - количество потоков
-// channels - каналы случайных чисел
-// usedNumbers - использованные числа
-// result - slice, являющийся результатом
-func filterRandomNumbers(flows int, channels []chan int, usedNumbers map[int]bool, result []int) ([]int, map[int]bool) {
-	for i := 0; i < flows; i++ {
-		number := <-channels[i]
-		if _, ok := usedNumbers[number]; !ok {
-			result = append(result, number)
-			usedNumbers[number] = true
-		}
-	}
-	return result, usedNumbers
-}
-
-// фнукция-диспетчер
-func getAllRandomNumbers(count, flows int) []int {
+// функция-диспетчер
+// запускает функцию получения случайного числа и его фильтрации до тех пор, пока не сгенерируется нужное кол-во элементов
+// для каждого потока получения и фильтрации случайного значения создается свой канал: channels[i]
+// по этому каналу передается сначала случайно сгенерированное случайное число (вызов getRandomNumber)
+// затем в анонимной функции происходит фильтрация этого значения:
+// - извлечение значения из канала
+// - фиксирование значения словаря с помощью мьютекса
+// - сравнение полученного по каналу значения со значениями словаря usedNumbers
+// - добавления значения в словарь использованных чисел (usedNumbers) и в срез-результат (result) в случае уникальности числа
+func getAllRandomNumbers(bound, flows int) []int {
 	rand.Seed(time.Now().UnixNano())
-	result := []int{}
+	var mutex sync.Mutex
 	usedNumbers := make(map[int]bool)
+	result := []int{}
 	channels := []chan int{}
-	// создание каналов
 	for i := 0; i < flows; i++ {
 		channels = append(channels, make(chan int))
 	}
 	for {
-		if len(result) == count {
+		if len(usedNumbers) == bound {
 			break
 		}
-		// логика по запуску горутин с каналами
 		for i := 0; i < flows; i++ {
-			go getRandomNumber(count, channels[i])
-
+			go getRandomNumber(bound, channels[i])
+			// функция-фильтратор
+			// выбирает допустимое значение, опираясь на словарь использованных чисел
+			// новое число не должно принадлежать словарю usedNumbers
+			go func(mutex *sync.Mutex, channel chan int) {
+				number := <-channel
+				mutex.Lock()
+				if _, ok := usedNumbers[number]; !ok {
+					usedNumbers[number] = true
+					result = append(result, number)
+				}
+				mutex.Unlock()
+			}(&mutex, channels[i])
 		}
-		// логика по проверке доступных значений
-		result, usedNumbers = filterRandomNumbers(flows, channels, usedNumbers, result)
 	}
 	return result
 }
@@ -73,7 +74,7 @@ func main() {
 	// bound - верхняя граница
 	// flows - количество потоков
 	var bound, flows int
-	flag.IntVar(&bound, "bound", 30, "Верхняя граница (положительное целое число)")
+	flag.IntVar(&bound, "bound", 10, "Верхняя граница (положительное целое число)")
 	flag.IntVar(&flows, "flows", 3, "Количество потоков (положительное целое число)")
 	flag.Parse()
 	if bound < 1 || flows < 1 {

@@ -2,9 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
-	"time"
 
 	"random-numbers-generator/generation"
 )
@@ -21,14 +19,7 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	} else {
-		g := new(generation.Generator)
-		start := time.Now()
-		g.Generate(bound, flows)
-		duration := time.Since(start)
-		fmt.Println("Неотсортированные данные:")
-		g.ShowUnsortedNumbers()
-		fmt.Println("Отсортированные данные:")
-		g.ShowSortedNumbers()
-		fmt.Println("Время получения среза составило: ", duration)
+		g := generation.NewGenerator(bound, flows)
+		g.Generate()
 	}
 }

@@ -76,17 +76,23 @@ func (g *Generator) getAllRandomNumbers() {
 	}
 }
 
-// Функция для инициализации задает поля и вызывает функцию генерации среза случайных чисел (getAllRandomNumbers)
-func (g *Generator) Generate(bound, flows int) {
-	g.bound = bound
-	g.flows = flows
+// Функция для инициализации. Задает поля и вызывает функцию генерации среза случайных чисел (getAllRandomNumbers)
+// так же фиксирует время выполнения генерации среза случайных чисел
+func (g *Generator) Generate() {
 	g.numbersInfo.usedNumbers = make(map[int]bool)
 	g.numbersInfo.result = []int{}
+	start := time.Now()
 	g.getAllRandomNumbers()
+	duration := time.Since(start)
+	fmt.Println("Неотсортированные данные:")
+	g.showUnsortedNumbers()
+	fmt.Println("Отсортированные данные:")
+	g.showSortedNumbers()
+	fmt.Println("Время генерации: ", duration)
 }
 
 // Выводит в консоль срез случайных чисел
-func (g *Generator) ShowUnsortedNumbers() {
+func (g *Generator) showUnsortedNumbers() {
 	for _, value := range g.numbersInfo.result {
 		fmt.Print(value, " ")
 	}
@@ -95,7 +101,7 @@ func (g *Generator) ShowUnsortedNumbers() {
 
 // Вызывает функцию (getAndSortNumbers) получения и сортировки нового среза случайных чисел
 // И выводит этот срез в консоль
-func (g *Generator) ShowSortedNumbers() {
+func (g *Generator) showSortedNumbers() {
 	g.getAndSortNumbers()
 	for _, value := range g.sortedNumbers {
 		fmt.Print(value, " ")
@@ -103,14 +109,14 @@ func (g *Generator) ShowSortedNumbers() {
 	fmt.Println()
 }
 
-// Возвращает срез случайных чисел
-func (g *Generator) GetUnsortedNumbers() []int {
-	return g.numbersInfo.result
-}
-
 // Копирует срез случайных чисел, затем сортирует его и записывает в поле sortedNumbers
 func (g *Generator) getAndSortNumbers() {
 	g.sortedNumbers = make([]int, len(g.numbersInfo.result))
 	copy(g.sortedNumbers, g.numbersInfo.result)
 	sort.Ints(g.sortedNumbers)
+}
+
+// Возвращает структуру с одним публичным методом (Generate)
+func NewGenerator(bound, flows int) Generator {
+	return Generator{bound: bound, flows: flows}
 }

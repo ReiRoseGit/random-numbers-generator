@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"random-numbers-generator/generation"
 )
@@ -13,7 +14,7 @@ func main() {
 	// bound - верхняя граница
 	// flows - количество потоков
 	var bound, flows int
-	flag.IntVar(&bound, "bound", 10, "Верхняя граница (положительное целое число)")
+	flag.IntVar(&bound, "bound", 40, "Верхняя граница (положительное целое число)")
 	flag.IntVar(&flows, "flows", 3, "Количество потоков (положительное целое число)")
 	flag.Parse()
 	if bound < 1 || flows < 1 {
@@ -21,10 +22,13 @@ func main() {
 		os.Exit(1)
 	} else {
 		g := new(generation.Generator)
+		start := time.Now()
 		g.Generate(bound, flows)
+		duration := time.Since(start)
 		fmt.Println("Неотсортированные данные:")
 		g.ShowUnsortedNumbers()
 		fmt.Println("Отсортированные данные:")
 		g.ShowSortedNumbers()
+		fmt.Println("Время получения среза составило: ", duration)
 	}
 }

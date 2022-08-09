@@ -12,7 +12,6 @@ import (
 // sortedNumbers - срез отсортированных чисел
 // numbersInfo - информация, которая будет защищена от изменения в момент проверки фильтром
 type Generator struct {
-	bound, flows  int
 	sortedNumbers []int
 	numbersInfo   information
 }
@@ -26,8 +25,8 @@ type information struct {
 }
 
 // Генерирует и отправляет в канал случайное число из отрезка [1, bound]
-func (g *Generator) getRandomNumber(channel chan int) {
-	channel <- 1 + rand.Intn(g.bound)
+func (g *Generator) getRandomNumber(bound int, channel chan int) {
+	channel <- 1 + rand.Intn(bound)
 }
 
 /*
@@ -48,9 +47,9 @@ func (g *Generator) filterRandomNumber(channel chan int) {
 }
 
 // Вызывает несколько (параметр flows) горутин генерации случайного числа (getRandomNumber) и его фильтрации (filterRandomNumber)
-func (g *Generator) callAllRoutines(channels []chan int) {
-	for i := 0; i < g.flows; i++ {
-		go g.getRandomNumber(channels[i])
+func (g *Generator) callAllRoutines(flows int, bound int, channels []chan int) {
+	for i := 0; i < flows; i++ {
+		go g.getRandomNumber(bound, channels[i])
 		go g.filterRandomNumber(channels[i])
 	}
 }
@@ -62,27 +61,27 @@ func (g *Generator) callAllRoutines(channels []chan int) {
   - Запускает функцию callAllRoutines до тех пор, пока количество использованных чисел (usedNumbers) не станет равно
     количеству, равному верхней границе генерации (bound)
 */
-func (g *Generator) getAllRandomNumbers() {
+func (g *Generator) getAllRandomNumbers(bound, flows int) {
 	rand.Seed(time.Now().UnixNano())
 	channels := []chan int{}
-	for i := 0; i < g.flows; i++ {
+	for i := 0; i < flows; i++ {
 		channels = append(channels, make(chan int))
 	}
 	for {
-		if len(g.numbersInfo.usedNumbers) == g.bound {
+		if len(g.numbersInfo.usedNumbers) == bound {
 			break
 		}
-		g.callAllRoutines(channels)
+		g.callAllRoutines(flows, bound, channels)
 	}
 }
 
 // Функция для инициализации. Задает поля и вызывает функцию генерации среза случайных чисел (getAllRandomNumbers)
 // так же фиксирует время выполнения генерации среза случайных чисел
-func (g *Generator) Generate() {
+func (g *Generator) Generate(bound, flows int) {
 	g.numbersInfo.usedNumbers = make(map[int]bool)
 	g.numbersInfo.result = []int{}
 	start := time.Now()
-	g.getAllRandomNumbers()
+	g.getAllRandomNumbers(bound, flows)
 	duration := time.Since(start)
 	fmt.Println("Неотсортированные данные:")
 	g.showUnsortedNumbers()
@@ -117,6 +116,6 @@ func (g *Generator) getAndSortNumbers() {
 }
 
 // Возвращает структуру с одним публичным методом (Generate)
-func NewGenerator(bound, flows int) Generator {
-	return Generator{bound: bound, flows: flows}
+func NewGenerator() Generator {
+	return Generator{}
 }

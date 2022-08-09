@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"os"
-
 	"random-numbers-generator/generation"
 )
 
@@ -19,7 +18,7 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	} else {
-		g := generation.NewGenerator(bound, flows)
-		g.Generate()
+		g := generation.NewGenerator()
+		g.Generate(bound, flows)
 	}
 }

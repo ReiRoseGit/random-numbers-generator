@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -17,18 +16,6 @@ type NumbersInformation struct {
 	Time            time.Duration `json:"time"`
 }
 
-// Обрабатывает маршрут /
-// Выводит на экран информацию о получении случайных значений
-func home(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
-	fmt.Fprintln(w, "bound - верхяя граница генерации, flows - количество потоков")
-	fmt.Fprintln(w, "Для получения случайных чисел перейдите по адресу:")
-	fmt.Fprintln(w, "/numbers?bound=<значение>&flows=<значение>")
-}
-
 // Получает request и значение, которое нужно найти в качестве query-параметра
 // Конвертирует в int найденный query-параметр
 func getQuery(r *http.Request, q string) (int, error) {
@@ -37,31 +24,33 @@ func getQuery(r *http.Request, q string) (int, error) {
 
 // Обрабатывает маршрут /numbers
 // Генерирует список случайных чисел на основании query-параметров: bound и flows
-func generateNumbers(w http.ResponseWriter, r *http.Request) {
+func numbersHandler(w http.ResponseWriter, r *http.Request) {
 	bound, err1 := getQuery(r, "bound")
 	flows, err2 := getQuery(r, "flows")
-	if err1 != nil || bound < 1 || err2 != nil || flows < 1 {
+	if err1 != nil || err2 != nil {
 		http.NotFound(w, r)
 		return
 	}
 	g := generation.NewGenerator()
-	jsonNumbers, jsonErr := createJSON(g.Generate(bound, flows))
-	if jsonErr != nil {
-		log.Fatal(jsonErr)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintln(w, string(jsonNumbers))
+	renderJSON(w, &g, bound, flows)
 }
 
-// Генерирует и возвращает JSON
-func createJSON(unsortedNumbers []int, sortedNumbers []int, time time.Duration) ([]byte, error) {
-	return json.Marshal(&NumbersInformation{UnsortedNumbers: unsortedNumbers, SortedNumbers: sortedNumbers, Time: time})
+// Генерирует JSON
+func renderJSON(w http.ResponseWriter, g *generation.Generator, bound, flows int) {
+	var js []byte
+	if bound < 1 || flows < 1 {
+		js, _ = json.Marshal(&NumbersInformation{UnsortedNumbers: []int{}, SortedNumbers: []int{}})
+	} else {
+		unsortedNumbers, sortedNumbers, time := g.Generate(bound, flows)
+		js, _ = json.Marshal(&NumbersInformation{UnsortedNumbers: unsortedNumbers, SortedNumbers: sortedNumbers, Time: time})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
 }
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/numbers", generateNumbers)
+	mux.HandleFunc("/numbers", numbersHandler)
 	err := http.ListenAndServe(":3000", mux)
 	log.Fatal(err)
 }

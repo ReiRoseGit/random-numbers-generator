@@ -49,6 +49,7 @@ func generateNumbers(w http.ResponseWriter, r *http.Request) {
 	if jsonErr != nil {
 		log.Fatal(jsonErr)
 	}
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintln(w, string(jsonNumbers))
 }
 

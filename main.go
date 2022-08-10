@@ -12,9 +12,9 @@ import (
 )
 
 type NumbersInformation struct {
-	UnsortedNumbers []int
-	SortedNumbers   []int
-	Time            time.Duration
+	UnsortedNumbers []int         `json:"unsorted_numbers"`
+	SortedNumbers   []int         `json:"sorted_numbers"`
+	Time            time.Duration `json:"time"`
 }
 
 // Обрабатывает маршрут /

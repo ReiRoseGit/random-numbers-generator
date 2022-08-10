@@ -86,24 +86,6 @@ func (g *Generator) Generate(bound, flows int) ([]int, []int, time.Duration) {
 	return g.numbersInfo.result, g.sortedNumbers, duration
 }
 
-// Выводит в консоль срез случайных чисел
-// func (g *Generator) showUnsortedNumbers(w http.ResponseWriter) {
-// 	for _, value := range g.numbersInfo.result {
-// 		fmt.Fprint(w, value, " ")
-// 	}
-// 	fmt.Fprintln(w)
-// }
-
-// Вызывает функцию (getAndSortNumbers) получения и сортировки нового среза случайных чисел
-// И выводит этот срез в консоль
-// func (g *Generator) showSortedNumbers(w http.ResponseWriter) {
-// 	g.getAndSortNumbers()
-// 	for _, value := range g.sortedNumbers {
-// 		fmt.Fprint(w, value, " ")
-// 	}
-// 	fmt.Fprintln(w)
-// }
-
 // Копирует срез случайных чисел, затем сортирует его и записывает в поле sortedNumbers
 func (g *Generator) getAndSortNumbers() {
 	g.sortedNumbers = make([]int, len(g.numbersInfo.result))

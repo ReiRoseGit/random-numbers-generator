@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +10,12 @@ import (
 
 	"random-numbers-generator/generation"
 )
+
+type NumbersInformation struct {
+	UnsortedNumbers []int
+	SortedNumbers   []int
+	Time            time.Duration
+}
 
 // Обрабатывает маршрут /
 // Выводит на экран информацию о получении случайных значений
@@ -38,18 +45,16 @@ func generateNumbers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	g := generation.NewGenerator()
-	unsortedNumbers, sortedNumbers, time := g.Generate(bound, flows)
-	showNumbersInfo(w, unsortedNumbers, sortedNumbers, time)
+	jsonNumbers, jsonErr := createJSON(g.Generate(bound, flows))
+	if jsonErr != nil {
+		log.Fatal(jsonErr)
+	}
+	fmt.Fprintln(w, string(jsonNumbers))
 }
 
-// Вывод данных на экран
-func showNumbersInfo(w http.ResponseWriter, unsortedNumbers []int, sortedNumbers []int, time time.Duration) {
-	fmt.Fprintln(w, "Неотсортированные данные:")
-	fmt.Fprintln(w, unsortedNumbers)
-	fmt.Fprintln(w, "Отсортированные данные:")
-	fmt.Fprintln(w, sortedNumbers)
-	fmt.Fprintln(w, "Время:")
-	fmt.Fprintln(w, time)
+// Генерирует и возвращает JSON
+func createJSON(unsortedNumbers []int, sortedNumbers []int, time time.Duration) ([]byte, error) {
+	return json.Marshal(&NumbersInformation{UnsortedNumbers: unsortedNumbers, SortedNumbers: sortedNumbers, Time: time})
 }
 
 func main() {

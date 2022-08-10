@@ -1,7 +1,6 @@
 package generation
 
 import (
-	"fmt"
 	"math/rand"
 	"sort"
 	"sync"
@@ -77,36 +76,33 @@ func (g *Generator) getAllRandomNumbers(bound, flows int) {
 
 // Функция для инициализации. Задает поля и вызывает функцию генерации среза случайных чисел (getAllRandomNumbers)
 // так же фиксирует время выполнения генерации среза случайных чисел
-func (g *Generator) Generate(bound, flows int) {
+func (g *Generator) Generate(bound, flows int) ([]int, []int, time.Duration) {
 	g.numbersInfo.usedNumbers = make(map[int]bool)
 	g.numbersInfo.result = []int{}
 	start := time.Now()
 	g.getAllRandomNumbers(bound, flows)
 	duration := time.Since(start)
-	fmt.Println("Неотсортированные данные:")
-	g.showUnsortedNumbers()
-	fmt.Println("Отсортированные данные:")
-	g.showSortedNumbers()
-	fmt.Println("Время генерации: ", duration)
+	g.getAndSortNumbers()
+	return g.numbersInfo.result, g.sortedNumbers, duration
 }
 
 // Выводит в консоль срез случайных чисел
-func (g *Generator) showUnsortedNumbers() {
-	for _, value := range g.numbersInfo.result {
-		fmt.Print(value, " ")
-	}
-	fmt.Println()
-}
+// func (g *Generator) showUnsortedNumbers(w http.ResponseWriter) {
+// 	for _, value := range g.numbersInfo.result {
+// 		fmt.Fprint(w, value, " ")
+// 	}
+// 	fmt.Fprintln(w)
+// }
 
 // Вызывает функцию (getAndSortNumbers) получения и сортировки нового среза случайных чисел
 // И выводит этот срез в консоль
-func (g *Generator) showSortedNumbers() {
-	g.getAndSortNumbers()
-	for _, value := range g.sortedNumbers {
-		fmt.Print(value, " ")
-	}
-	fmt.Println()
-}
+// func (g *Generator) showSortedNumbers(w http.ResponseWriter) {
+// 	g.getAndSortNumbers()
+// 	for _, value := range g.sortedNumbers {
+// 		fmt.Fprint(w, value, " ")
+// 	}
+// 	fmt.Fprintln(w)
+// }
 
 // Копирует срез случайных чисел, затем сортирует его и записывает в поле sortedNumbers
 func (g *Generator) getAndSortNumbers() {

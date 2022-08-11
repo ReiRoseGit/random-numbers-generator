@@ -24,6 +24,12 @@ type NumbersInformation struct {
 	Time            time.Duration `json:"time"`
 }
 
+// Структура, описывающая JSON файл при некорректных данных
+type ErrorJSON struct {
+	ErrCode    int    `json:"error_code"`
+	ErrMessage string `json:"error_message"`
+}
+
 // Конструктор генератора, вызывается один раз в пакете main
 func NewNumberGenerator() numberGenerator {
 	return numberGenerator{generator: generation.NewGenerator(), numberInfo: NumbersInformation{}}
@@ -32,14 +38,29 @@ func NewNumberGenerator() numberGenerator {
 // Генерирует JSON файл
 func (ng *numberGenerator) getJSON(w http.ResponseWriter, r *http.Request, bound, flows int) {
 	var js []byte
-	if bound < 1 || flows < 1 {
-		js, _ = json.Marshal(&NumbersInformation{UnsortedNumbers: []int{}, SortedNumbers: []int{}})
-	} else {
+	if code := ng.cleanParams(bound, flows); code == 0 {
 		unsortedNumbers, sortedNumbers, time := ng.generator.Generate(bound, flows)
 		js, _ = json.Marshal(&NumbersInformation{UnsortedNumbers: unsortedNumbers, SortedNumbers: sortedNumbers, Time: time})
+	} else {
+		if code == 100 {
+			js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "bound parameter must be a positive number"})
+		} else {
+			js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "flows parameter must be a positive number"})
+		}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
+}
+
+// Валидатор параметров, возвращает код ошибки или 0, в случае, если данные валидны
+func (ng *numberGenerator) cleanParams(bound, flows int) int {
+	if bound > 0 && flows > 0 {
+		return 0
+	} else if bound < 0 {
+		return 100
+	} else {
+		return 200
+	}
 }
 
 // Получает request и значение, которое нужно найти в качестве query-параметра
@@ -64,7 +85,7 @@ func (ng *numberGenerator) NumbersHandler(w http.ResponseWriter, r *http.Request
 	if r.Method == http.MethodGet {
 		ng.getQueriesAndJSON(w, r)
 	} else {
-		http.Error(w, fmt.Sprintf("expect method GET /numbers, got %v", r.Method), http.StatusMethodNotAllowed)
+		http.Error(w, fmt.Sprintf("expect method GET, got %v", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
 }

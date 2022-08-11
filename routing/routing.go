@@ -44,8 +44,10 @@ func (ng *numberGenerator) getJSON(w http.ResponseWriter, r *http.Request, bound
 	} else {
 		if code == 100 {
 			js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "bound parameter must be a positive number"})
-		} else {
+		} else if code == 200 {
 			js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "flows parameter must be a positive number"})
+		} else {
+			js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "parameters must be positive numbers"})
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -56,7 +58,9 @@ func (ng *numberGenerator) getJSON(w http.ResponseWriter, r *http.Request, bound
 func (ng *numberGenerator) cleanParams(bound, flows int) int {
 	if bound > 0 && flows > 0 {
 		return 0
-	} else if bound < 0 {
+	} else if bound < 0 && flows < 0 {
+		return 300
+	} else if bound < 1 {
 		return 100
 	} else {
 		return 200

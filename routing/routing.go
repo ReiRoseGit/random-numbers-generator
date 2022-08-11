@@ -3,8 +3,13 @@ package routing
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"random-numbers-generator/generation"
@@ -28,6 +33,10 @@ type NumbersInformation struct {
 type ErrorJSON struct {
 	ErrCode    int    `json:"error_code"`
 	ErrMessage string `json:"error_message"`
+}
+
+type htmlData struct {
+	Title string
 }
 
 // Конструктор генератора, вызывается один раз в пакете main
@@ -88,8 +97,24 @@ func (ng *numberGenerator) getQueriesAndJSON(w http.ResponseWriter, r *http.Requ
 func (ng *numberGenerator) NumbersHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		ng.getQueriesAndJSON(w, r)
+	} else if r.Method == http.MethodPost {
+		bound := r.FormValue("bound")
+		flows := r.FormValue("flows")
+		w.Write([]byte(bound))
+		fmt.Fprintln(w)
+		w.Write([]byte(flows))
 	} else {
-		http.Error(w, fmt.Sprintf("expect method GET, got %v", r.Method), http.StatusMethodNotAllowed)
+		http.Error(w, fmt.Sprintf("expect method Get, got %v", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
+}
+
+// Обрабатывает маршрут /
+func (ng *numberGenerator) IndexHandler(w http.ResponseWriter, r *http.Request) {
+	str, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	tmpl, err := template.ParseFiles(strings.Join([]string{str, "/templates/", "index.html"}, ""))
+	if err != nil {
+		log.Fatal("Unable to parse from template:", err)
+	}
+	tmpl.Execute(w, nil)
 }

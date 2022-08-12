@@ -2,3 +2,4 @@
 *.json
 src
 node_modules
+webpack.config.js

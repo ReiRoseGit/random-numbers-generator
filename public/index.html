@@ -12,11 +12,17 @@
         <form id="formElem" method="POST" action="/numbers" style="max-width: 800px; margin: 0 auto; margin-top: 60px; display: flex; flex-direction: column; align-items: center;">
             <div class="form-group" style="min-width: 100%;">
               <label>Количество чисел:</label>
-              <input type="text" class="form-control" placeholder="Количество чисел" name="bound" id="bound">
+              <input type="text" class="form-control" placeholder="Количество чисел" name="bound" id="bound" required>
+              <div class="invalid-feedback">
+                Укажите допустимое значение.
+              </div>
             </div>
             <div class="form-group" style="min-width: 100%;">
                 <label>Количество потоков:</label>
-                <input type="text" class="form-control" placeholder="Количество потоков" name="flows" id="flows">
+                <input type="text" class="form-control" placeholder="Количество потоков" name="flows" id="flows" required>
+                <div class="invalid-feedback">
+                  Укажите допустимое значение.
+                </div>
               </div>
             <button type="submit" class="btn btn-primary">Сгенерировать</button>
         </form>

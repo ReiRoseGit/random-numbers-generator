@@ -38,18 +38,18 @@ func NewNumberGenerator() numberGenerator {
 // Генерирует JSON файл
 func (ng *numberGenerator) getJSON(w http.ResponseWriter, r *http.Request, bound, flows int) {
 	var js []byte
-	code := ng.cleanParams(bound, flows)
-	switch code {
-	case 0:
-		unsortedNumbers, sortedNumbers, time := ng.generator.Generate(bound, flows)
-		js, _ = json.Marshal(&NumbersInformation{UnsortedNumbers: unsortedNumbers, SortedNumbers: sortedNumbers, Time: time})
-	case 100:
-		js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "bound parameter must be a positive number"})
-	case 200:
-		js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "flows parameter must be a positive number"})
-	case 300:
-		js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "parameters must be positive numbers"})
-	}
+	// code := ng.cleanParams(bound, flows)
+	// switch code {
+	// case 0:
+	unsortedNumbers, sortedNumbers, time := ng.generator.Generate(bound, flows)
+	js, _ = json.Marshal(&NumbersInformation{UnsortedNumbers: unsortedNumbers, SortedNumbers: sortedNumbers, Time: time})
+	// case 100:
+	// 	js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "bound parameter must be a positive number"})
+	// case 200:
+	// 	js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "flows parameter must be a positive number"})
+	// case 300:
+	// 	js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "parameters must be positive numbers"})
+	// }
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
 }

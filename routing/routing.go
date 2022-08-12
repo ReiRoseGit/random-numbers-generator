@@ -4,10 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"random-numbers-generator/generation"
@@ -105,7 +102,6 @@ func (ng *numberGenerator) getQueriesAndJSON(w http.ResponseWriter, r *http.Requ
 
 func (ng *numberGenerator) NumbersHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		fmt.Println(r.Body)
 		bound, _ := strconv.Atoi(r.FormValue("bound"))
 		flows, _ := strconv.Atoi(r.FormValue("flows"))
 		ng.getJSON(w, r, bound, flows)
@@ -116,17 +112,6 @@ func (ng *numberGenerator) NumbersHandler(w http.ResponseWriter, r *http.Request
 }
 
 // Обрабатывает маршрут /
-// func (ng *numberGenerator) IndexHandler(w http.ResponseWriter, r *http.Request) {
-// 	str, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-// 	tmpl, err := template.ParseFiles(strings.Join([]string{str, "/templates/", "index.html"}, ""))
-// 	if err != nil {
-// 		log.Fatal("Unable to parse from template:", err)
-// 	}
-// 	tmpl.Execute(w, nil)
-// }
-
-// Обрабатывает маршрут /
 func (ng *numberGenerator) IndexHandler(w http.ResponseWriter, r *http.Request) {
-	str, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-	http.ServeFile(w, r, strings.Join([]string{str, "/static"}, ""))
+	http.FileServer(http.Dir("/dist"))
 }

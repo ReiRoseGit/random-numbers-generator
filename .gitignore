@@ -1,1 +1,4 @@
 *.exe
+*.json
+src
+node_modules

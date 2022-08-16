@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"random-numbers-generator/generation"
+
+	"github.com/gorilla/websocket"
 )
 
 // generator - объект-генератор
@@ -38,68 +40,22 @@ func NewNumberGenerator() numberGenerator {
 // Генерирует JSON файл
 func (ng *numberGenerator) getJSON(w http.ResponseWriter, r *http.Request, bound, flows int) {
 	var js []byte
-	// code := ng.cleanParams(bound, flows)
-	// switch code {
-	// case 0:
 	unsortedNumbers, sortedNumbers, time := ng.generator.Generate(bound, flows)
 	js, _ = json.Marshal(&NumbersInformation{UnsortedNumbers: unsortedNumbers, SortedNumbers: sortedNumbers, Time: time})
-	// case 100:
-	// 	js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "bound parameter must be a positive number"})
-	// case 200:
-	// 	js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "flows parameter must be a positive number"})
-	// case 300:
-	// 	js, _ = json.Marshal(&ErrorJSON{ErrCode: code, ErrMessage: "parameters must be positive numbers"})
-	// }
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
 }
 
-// Валидатор параметров, возвращает код ошибки или 0, в случае, если данные валидны
-func (ng *numberGenerator) cleanParams(bound, flows int) int {
-	if bound > 0 && flows > 0 {
-		return 0
-	} else if bound < 1 && flows < 1 {
-		return 300
-	} else if bound < 1 {
-		return 100
-	} else {
-		return 200
-	}
-}
-
-// Получает request и значение, которое нужно найти в качестве query-параметра
-// Конвертирует в int найденный query-параметр
-func (ng *numberGenerator) getQuery(r *http.Request, q string) (int, error) {
-	return strconv.Atoi(r.URL.Query().Get(q))
-}
-
-// Парсит query параметры и вызывает функцию для генерации JSON с ними
-func (ng *numberGenerator) getQueriesAndJSON(w http.ResponseWriter, r *http.Request) {
-	bound, err1 := ng.getQuery(r, "bound")
-	flows, err2 := ng.getQuery(r, "flows")
-	if err1 != nil || err2 != nil {
-		http.NotFound(w, r)
-		return
-	}
-	ng.getJSON(w, r, bound, flows)
+// Запускает функцию генерации последовательностей и предает сгенерированные данные в соответствующие каналы
+func (ng *numberGenerator) getLiveNumbers(w http.ResponseWriter, r *http.Request, bound, flows int,
+	liveChannel chan int, sortedChannel chan []int, timeChannel chan time.Duration, unsortedChannel chan []int) {
+	unsortedNumbers, sortedNumbers, time := ng.generator.Generate(bound, flows, liveChannel)
+	unsortedChannel <- unsortedNumbers
+	sortedChannel <- sortedNumbers
+	timeChannel <- time
 }
 
 // Обрабатывает маршрут /numbers
-// func (ng *numberGenerator) NumbersHandler(w http.ResponseWriter, r *http.Request) {
-// 	if r.Method == http.MethodGet {
-// 		ng.getQueriesAndJSON(w, r)
-// 	} else if r.Method == http.MethodPost {
-// 		bound := r.FormValue("bound")
-// 		flows := r.FormValue("flows")
-// 		w.Write([]byte(bound))
-// 		fmt.Fprintln(w)
-// 		w.Write([]byte(flows))
-// 	} else {
-// 		http.Error(w, fmt.Sprintf("expect method Get, got %v", r.Method), http.StatusMethodNotAllowed)
-// 		return
-// 	}
-// }
-
 func (ng *numberGenerator) NumbersHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		bound, _ := strconv.Atoi(r.FormValue("bound"))
@@ -111,7 +67,48 @@ func (ng *numberGenerator) NumbersHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// Обрабатывает маршрут /
-func (ng *numberGenerator) IndexHandler(w http.ResponseWriter, r *http.Request) {
-	http.FileServer(http.Dir("/dist"))
+// Настройка websocket
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+// Управление websocket. Принимает значения из формы и создает каналы для приема данных из функции getLiveNumbers,
+// генерирующей последовательность
+func (ng *numberGenerator) WebSocketHandler(w http.ResponseWriter, r *http.Request) {
+	connection, _ := upgrader.Upgrade(w, r, nil)
+	defer connection.Close()
+	for {
+		_, b, _ := connection.ReadMessage()
+		_, f, _ := connection.ReadMessage()
+		bound, _ := strconv.Atoi(string(b))
+		flows, _ := strconv.Atoi(string(f))
+		// Канал для динамического вывода чисел
+		liveChannel := make(chan int)
+		unsortedChannel := make(chan []int)
+		sortedChannel := make(chan []int)
+		timeChannel := make(chan time.Duration)
+		go ng.getLiveNumbers(w, r, bound, flows, liveChannel, sortedChannel, timeChannel, unsortedChannel)
+		var sorted, unsorted []int
+		var time time.Duration
+		for {
+			if bound == 0 {
+				break
+			}
+			select {
+			case value := <-liveChannel:
+				connection.WriteMessage(1, []byte(strconv.Itoa(value)))
+			case value := <-unsortedChannel:
+				unsorted = value
+			case value := <-sortedChannel:
+				sorted = value
+			case value := <-timeChannel:
+				time = value
+				bound = 0
+			}
+		}
+		js, _ := json.Marshal(&NumbersInformation{UnsortedNumbers: unsorted, SortedNumbers: sorted, Time: time})
+		connection.WriteMessage(1, js)
+	}
 }

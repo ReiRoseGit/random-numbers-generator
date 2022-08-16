@@ -35,21 +35,24 @@ func (g *Generator) getRandomNumber(bound int, channel chan int) {
 - Сравнение полученного по каналу значения со значениями словаря usedNumbers
 - Добавления значения в словарь использованных чисел (usedNumbers) и в срез-результат (result) в случае уникальности числа
 */
-func (g *Generator) filterRandomNumber(channel chan int) {
+func (g *Generator) filterRandomNumber(channel chan int, liveChannel ...chan int) {
 	number := <-channel
 	g.numbersInfo.mutex.Lock()
 	if _, ok := g.numbersInfo.usedNumbers[number]; !ok {
 		g.numbersInfo.usedNumbers[number] = true
 		g.numbersInfo.result = append(g.numbersInfo.result, number)
+		if len(liveChannel) == 1 {
+			liveChannel[0] <- number
+		}
 	}
 	g.numbersInfo.mutex.Unlock()
 }
 
 // Вызывает несколько (параметр flows) горутин генерации случайного числа (getRandomNumber) и его фильтрации (filterRandomNumber)
-func (g *Generator) callAllRoutines(flows int, bound int, channels []chan int) {
+func (g *Generator) callAllRoutines(flows int, bound int, channels []chan int, liveChannel ...chan int) {
 	for i := 0; i < flows; i++ {
 		go g.getRandomNumber(bound, channels[i])
-		go g.filterRandomNumber(channels[i])
+		go g.filterRandomNumber(channels[i], liveChannel...)
 	}
 }
 
@@ -60,7 +63,7 @@ func (g *Generator) callAllRoutines(flows int, bound int, channels []chan int) {
   - Запускает функцию callAllRoutines до тех пор, пока количество использованных чисел (usedNumbers) не станет равно
     количеству, равному верхней границе генерации (bound)
 */
-func (g *Generator) getAllRandomNumbers(bound, flows int) {
+func (g *Generator) getAllRandomNumbers(bound, flows int, channel ...chan int) {
 	rand.Seed(time.Now().UnixNano())
 	channels := []chan int{}
 	for i := 0; i < flows; i++ {
@@ -70,18 +73,25 @@ func (g *Generator) getAllRandomNumbers(bound, flows int) {
 		if len(g.numbersInfo.usedNumbers) == bound {
 			break
 		}
-		g.callAllRoutines(flows, bound, channels)
+		g.callAllRoutines(flows, bound, channels, channel...)
 	}
 }
 
 // Функция для инициализации. Задает поля и вызывает функцию генерации среза случайных чисел (getAllRandomNumbers)
 // так же фиксирует время выполнения генерации среза случайных чисел
-func (g *Generator) Generate(bound, flows int) ([]int, []int, time.Duration) {
+func (g *Generator) Generate(bound, flows int, channel ...chan int) ([]int, []int, time.Duration) {
 	g.numbersInfo.usedNumbers = make(map[int]bool)
 	g.numbersInfo.result = []int{}
-	start := time.Now()
-	g.getAllRandomNumbers(bound, flows)
-	duration := time.Since(start)
+	var duration time.Duration
+	if len(channel) == 0 {
+		start := time.Now()
+		g.getAllRandomNumbers(bound, flows)
+		duration = time.Since(start)
+	} else {
+		start := time.Now()
+		g.getAllRandomNumbers(bound, flows, channel[0])
+		duration = time.Since(start)
+	}
 	g.getAndSortNumbers()
 	return g.numbersInfo.result, g.sortedNumbers, duration
 }

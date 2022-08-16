@@ -53,7 +53,7 @@ func (ng *numberGenerator) getJSON(w http.ResponseWriter, r *http.Request, bound
 }
 
 // Запускает функцию генерации последовательностей и предает сгенерированные данные в соответствующие каналы
-func (ng *numberGenerator) getLiveNumbers(w http.ResponseWriter, r *http.Request, bound, flows int,
+func (ng *numberGenerator) getLiveNumbers(bound, flows int,
 	liveChannel chan int, sortedChannel chan []int, timeChannel chan time.Duration, unsortedChannel chan []int) {
 	unsortedNumbers, sortedNumbers, time := ng.generator.Generate(bound, flows, liveChannel)
 	unsortedChannel <- unsortedNumbers
@@ -92,33 +92,39 @@ func (ng *numberGenerator) WebSocketHandler(w http.ResponseWriter, r *http.Reque
 		}
 		var params Params
 		json.Unmarshal(p, &params)
-		// Канал для динамического вывода чисел
-		liveChannel := make(chan int)
-		unsortedChannel := make(chan []int)
-		sortedChannel := make(chan []int)
-		timeChannel := make(chan time.Duration)
 		bound, _ := strconv.Atoi(params.Bound)
 		flows, _ := strconv.Atoi(params.Flows)
-		go ng.getLiveNumbers(w, r, bound, flows, liveChannel, sortedChannel, timeChannel, unsortedChannel)
-		var sorted, unsorted []int
-		var time time.Duration
-		for {
-			if bound == 0 {
-				break
-			}
-			select {
-			case value := <-liveChannel:
-				connection.WriteMessage(1, []byte(strconv.Itoa(value)))
-			case value := <-unsortedChannel:
-				unsorted = value
-			case value := <-sortedChannel:
-				sorted = value
-			case value := <-timeChannel:
-				time = value
-				bound = 0
-			}
-		}
-		js, _ := json.Marshal(&NumbersInformation{UnsortedNumbers: unsorted, SortedNumbers: sorted, Time: time})
-		connection.WriteMessage(1, js)
+		ng.liveNumbers(connection, bound, flows)
 	}
+}
+
+// Создает каналы для обмена информацией, динамически отправляет числа клиенту,
+// формирует и отправляет JSON файл 
+func (ng *numberGenerator) liveNumbers(connection *websocket.Conn, bound, flows int) {
+	// Канал для динамического вывода чисел
+	liveChannel := make(chan int)
+	unsortedChannel := make(chan []int)
+	sortedChannel := make(chan []int)
+	timeChannel := make(chan time.Duration)
+	go ng.getLiveNumbers(bound, flows, liveChannel, sortedChannel, timeChannel, unsortedChannel)
+	var sorted, unsorted []int
+	var time time.Duration
+	for {
+		if bound == 0 {
+			break
+		}
+		select {
+		case value := <-liveChannel:
+			connection.WriteMessage(1, []byte(strconv.Itoa(value)))
+		case value := <-unsortedChannel:
+			unsorted = value
+		case value := <-sortedChannel:
+			sorted = value
+		case value := <-timeChannel:
+			time = value
+			bound = 0
+		}
+	}
+	js, _ := json.Marshal(&NumbersInformation{UnsortedNumbers: unsorted, SortedNumbers: sorted, Time: time})
+	connection.WriteMessage(1, js)
 }

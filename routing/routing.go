@@ -32,6 +32,12 @@ type ErrorJSON struct {
 	ErrMessage string `json:"error_message"`
 }
 
+// Структура, описывающая параметры
+type Params struct {
+	Bound string `json:"bound"`
+	Flows string `json:"flows"`
+}
+
 // Конструктор генератора, вызывается один раз в пакете main
 func NewNumberGenerator() numberGenerator {
 	return numberGenerator{generator: generation.NewGenerator(), numberInfo: NumbersInformation{}}
@@ -80,15 +86,16 @@ func (ng *numberGenerator) WebSocketHandler(w http.ResponseWriter, r *http.Reque
 	connection, _ := upgrader.Upgrade(w, r, nil)
 	defer connection.Close()
 	for {
-		_, b, _ := connection.ReadMessage()
-		_, f, _ := connection.ReadMessage()
-		bound, _ := strconv.Atoi(string(b))
-		flows, _ := strconv.Atoi(string(f))
+		_, p, _ := connection.ReadMessage()
+		var params Params
+		json.Unmarshal(p, &params)
 		// Канал для динамического вывода чисел
 		liveChannel := make(chan int)
 		unsortedChannel := make(chan []int)
 		sortedChannel := make(chan []int)
 		timeChannel := make(chan time.Duration)
+		bound, _ := strconv.Atoi(params.Bound)
+		flows, _ := strconv.Atoi(params.Flows)
 		go ng.getLiveNumbers(w, r, bound, flows, liveChannel, sortedChannel, timeChannel, unsortedChannel)
 		var sorted, unsorted []int
 		var time time.Duration

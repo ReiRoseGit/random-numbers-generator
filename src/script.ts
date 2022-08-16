@@ -32,35 +32,15 @@ formElem.onsubmit = async (e) => {
     flows.classList.remove("is-invalid")
     // Ветка для динамического вывода чисел
     if (checkBox.checked){
-        if (Number(bound.value) > 0 && Number(flows.value) > 0) {
-            // Очистка значений для данных 
-            Array.from(resultDataElements).forEach(element => {element.innerHTML = ""})
-            // Отправка параметров для получения последовательности случайных чисел
-            ws.send(JSON.stringify({bound:bound.value, flows:flows.value}))
-        }
-        else{
-            cleanParams(Number(bound.value), Number(flows.value), bound, flows)
-        }
+        getDynamicNumbers(bound, flows)
     }
-    // Ветка для вывода чисел по завершении генерации
+    // Ветка для статичного вывода чисел
     else{
-        if (Number(bound.value) > 0 && Number(flows.value) > 0) {
-            let response = await fetch('/numbers', {
-                method: 'POST',
-                body: new FormData(formElem)
-            });
-            let result : Promise<any> = await response.json();
-            resultDataElements[0].innerHTML = outputNumbers(result['unsorted_numbers'])
-            resultDataElements[1].innerHTML = outputNumbers(result['sorted_numbers'])
-            resultDataElements[2].innerHTML = result['time'] + " ns"
-        }
-        else{
-            cleanParams(Number(bound.value), Number(flows.value), bound, flows)
-        }
+        getStaticNumbers(bound, flows)
     }
 };
 
-// Выполняет проверку недопустимых параметров
+// Выполняет проверку недопустимых параметров и назначает классы недопустимым значениям инпутов
 function cleanParams(boundValue : number, flowsValue : number, bound : HTMLInputElement, flows : HTMLInputElement) : void{
     if (boundValue < 1 && flowsValue < 1){
         bound.classList.add("is-invalid")
@@ -71,5 +51,35 @@ function cleanParams(boundValue : number, flowsValue : number, bound : HTMLInput
     }
     else{
         flows.classList.add("is-invalid")
+    }
+}
+
+// Динамический вывод чисел с помощью вебсокета
+function getDynamicNumbers(bound : HTMLInputElement, flows : HTMLInputElement):void{
+    if (Number(bound.value) > 0 && Number(flows.value) > 0) {
+        // Очистка значений для данных 
+        Array.from(resultDataElements).forEach(element => {element.innerHTML = ""})
+        // Отправка параметров для получения последовательности случайных чисел
+        ws.send(JSON.stringify({bound:bound.value, flows:flows.value}))
+    }
+    else{
+        cleanParams(Number(bound.value), Number(flows.value), bound, flows)
+    }
+}
+
+// Статичный вывод чисел с помощью http
+async function getStaticNumbers(bound : HTMLInputElement, flows : HTMLInputElement):Promise<void>{
+    if (Number(bound.value) > 0 && Number(flows.value) > 0) {
+        let response = await fetch('/numbers', {
+            method: 'POST',
+            body: new FormData(formElem)
+        });
+        let result : Promise<any> = await response.json();
+        resultDataElements[0].innerHTML = outputNumbers(result['unsorted_numbers'])
+        resultDataElements[1].innerHTML = outputNumbers(result['sorted_numbers'])
+        resultDataElements[2].innerHTML = result['time'] + " ns"
+    }
+    else{
+        cleanParams(Number(bound.value), Number(flows.value), bound, flows)
     }
 }

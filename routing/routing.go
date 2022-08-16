@@ -99,7 +99,7 @@ func (ng *numberGenerator) WebSocketHandler(w http.ResponseWriter, r *http.Reque
 }
 
 // Создает каналы для обмена информацией, динамически отправляет числа клиенту,
-// формирует и отправляет JSON файл 
+// формирует и отправляет JSON файл
 func (ng *numberGenerator) liveNumbers(connection *websocket.Conn, bound, flows int) {
 	// Канал для динамического вывода чисел
 	liveChannel := make(chan int)

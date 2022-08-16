@@ -86,7 +86,10 @@ func (ng *numberGenerator) WebSocketHandler(w http.ResponseWriter, r *http.Reque
 	connection, _ := upgrader.Upgrade(w, r, nil)
 	defer connection.Close()
 	for {
-		_, p, _ := connection.ReadMessage()
+		mt, p, err := connection.ReadMessage()
+		if err != nil || mt == websocket.CloseMessage {
+			break
+		}
 		var params Params
 		json.Unmarshal(p, &params)
 		// Канал для динамического вывода чисел

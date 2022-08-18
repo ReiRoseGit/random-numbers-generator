@@ -1,0 +1,89 @@
+{
+    "extends": [
+        "tslint:latest",
+        "tslint-config-prettier"
+        // Не учитываем правила, которые правит prettier
+    ],
+    "rules": {
+        // Свойства в объекте могут располагаться в любом порядке
+        "object-literal-sort-keys": false,
+        // jsdoc не обазательный
+        "jsdoc-format": false,
+        // console.log() разрешен
+        "no-console": false,
+        // Разрешаем пустые блоки кода
+        "no-empty": false,
+        // Название интерфейса должно начинаться с заглавной I (Необязательно)
+        "interface-name": false,
+        // Использовать const вместо let и var везде где возможно
+        "prefer-const": true,
+        // Запрещает устаревшие /// <reference path=> imports (используйте ES6-style импорты)
+        "no-reference": true,
+        // Порядок импортов не важен
+        "ordered-imports": false,
+        // Порядок свойств в классах не важен
+        "member-ordering": false,
+        // Необязательно оборачивать выражения if/for/do/while в фигурные скобки
+        "curly": false,
+        // Нет запрета импорта подмодулей
+        "no-submodule-imports": false,
+        // Нет запрета на лишние зависимости
+        "no-implicit-dependencies": false,
+        // Нет запрета на сохранение this в переменной
+        "no-this-assignment": false,
+        // Нет запрета на объявление нескольких переменных одним выражением
+        "one-variable-per-declaration": false,
+        // radix для parseInt не обязателен
+        "radix": false,
+        // Циклы for-of не обязательны
+        "prefer-for-of": false,
+        // Нет запрета на краткую запись литерала объекта
+        "object-literal-shorthand": false,
+        // Проверка на hasOwnProperty необязательна
+        "forin": false,
+        // Кол-во классов в файле не ограничено
+        "max-classes-per-file": false,
+        // Формат записи переменных (camel, pascal, snake)
+        "variable-name": [true, "allow-snake-case", "allow-pascal-case"],
+        // Запрещаем приведение типа для литерала объекта
+        "no-object-literal-type-assertion": true,
+        // Выражения require() разрешены
+        "no-var-requires": false,
+        // Запрашиваем необходимость указания типов
+        "typedef": [
+            true,
+            // Проверка типа возвращаемого значения функции
+            "call-signature",
+            // Проверка типа возвращаемого значения стрелочной функции
+            "arrow-call-signature",
+            // Проверка типа принимаемого параметра функции
+            "parameter",
+            // Проверка типа принимаемого параметра стрелочной функции
+            "arrow-parameter",
+            // Проверка возвращаемого типа для методов интерфейса
+            "property-declaration",
+            // Проверка типа переменной
+            "variable-declaration",
+            // Проверка типа свойства класса
+            "member-variable-declaration",
+            // Проверка типов при деструктуризации объекта
+            "object-destructuring",
+            // Проверка типов при деструктуризации массива
+            "array-destructuring"
+        ],
+        // Можно писать традиционные function
+        "only-arrow-functions": false,
+        // Можно использовать eval()
+        "no-eval": false,
+        // Присваивать переменную через if-else можно как угодно
+        "prefer-conditional-expression": false,
+        // Тип any запрещен
+        "no-any": true,
+        // Присваивание в условном выражении запрещено
+        "no-conditional-assignment": true,
+        // namespace'ы разрешены
+        "no-namespace": false,
+        // Дефолтные импорты запрещены
+        "no-default-export": true
+    }
+}

@@ -1,5 +1,4 @@
 *.exe
-*.json
 node_modules
-webpack.config.js
-/dist
+dist
+package-lock.json

@@ -1,8 +1,8 @@
 package generation
 
 import (
+	"context"
 	"math/rand"
-	"sort"
 	"sync"
 	"time"
 )
@@ -11,8 +11,7 @@ import (
 // sortedNumbers - срез отсортированных чисел
 // numbersInfo - информация, которая будет защищена от изменения в момент проверки фильтром
 type Generator struct {
-	sortedNumbers []int
-	numbersInfo   information
+	numbersInfo information
 }
 
 // result - срез случайных чисел
@@ -34,6 +33,7 @@ func (g *Generator) getRandomNumber(bound int, channel chan int) {
 - Фиксирование значения словаря с помощью мьютекса
 - Сравнение полученного по каналу значения со значениями словаря usedNumbers
 - Добавления значения в словарь использованных чисел (usedNumbers) и в срез-результат (result) в случае уникальности числа
+- В случае динамического отправления данных (liveChannel - не пустой параметр), передает в этот канал уникальное число
 */
 func (g *Generator) filterRandomNumber(channel chan int, liveChannel ...chan int) {
 	number := <-channel
@@ -56,51 +56,45 @@ func (g *Generator) callAllRoutines(flows int, bound int, channels []chan int, l
 	}
 }
 
-/*
-Функция-диспетчер:
-  - Создает срез каналов, по которым передаются данные между
-    генератором случайного числа (getRandomNumber) и фильтратором (filterRandomNumber)
-  - Запускает функцию callAllRoutines до тех пор, пока количество использованных чисел (usedNumbers) не станет равно
-    количеству, равному верхней границе генерации (bound)
-*/
-func (g *Generator) getAllRandomNumbers(bound, flows int, channel ...chan int) {
+// Создает каналы для генерации и фильтрации случайного числа, запускает горутины до тех пор, пока не будет прервано соединение с клиентом
+// или  пока не сгенерирует все необходимые числа, фиксирует время генерации всех чисел и отправляет в канал времени
+func (g *Generator) getAllRandomNumbers(ctx context.Context, bound, flows int, result chan []int, timeCh chan time.Duration, channel ...chan int) {
 	rand.Seed(time.Now().UnixNano())
 	channels := []chan int{}
+	// Каналы для генерации и фильтрации
 	for i := 0; i < flows; i++ {
 		channels = append(channels, make(chan int))
 	}
+	// Если процесс генерации прерван
+	killed := ctx.Done()
+	// Засекает время начала генерации
+	start := time.Now()
+loop:
 	for {
-		if len(g.numbersInfo.usedNumbers) == bound {
-			break
+		select {
+		// Соединение прервано
+		case <-killed:
+			result <- []int{}
+			timeCh <- 0
+			break loop
+		default:
 		}
+		// Все числа сгенерированы
+		if len(g.numbersInfo.usedNumbers) == bound {
+			result <- g.numbersInfo.result
+			timeCh <- time.Since(start)
+			break loop
+		}
+		// Вызов необходимого числа горутин
 		g.callAllRoutines(flows, bound, channels, channel...)
 	}
 }
 
 // Функция для инициализации. Задает поля и вызывает функцию генерации среза случайных чисел (getAllRandomNumbers)
-// так же фиксирует время выполнения генерации среза случайных чисел
-func (g *Generator) Generate(bound, flows int, channel ...chan int) ([]int, []int, time.Duration) {
+func (g *Generator) Generate(ctx context.Context, result chan []int, timeCh chan time.Duration, bound, flows int, channel ...chan int) {
 	g.numbersInfo.usedNumbers = make(map[int]bool)
 	g.numbersInfo.result = []int{}
-	var duration time.Duration
-	if len(channel) == 0 {
-		start := time.Now()
-		g.getAllRandomNumbers(bound, flows)
-		duration = time.Since(start)
-	} else {
-		start := time.Now()
-		g.getAllRandomNumbers(bound, flows, channel[0])
-		duration = time.Since(start)
-	}
-	g.getAndSortNumbers()
-	return g.numbersInfo.result, g.sortedNumbers, duration
-}
-
-// Копирует срез случайных чисел, затем сортирует его и записывает в поле sortedNumbers
-func (g *Generator) getAndSortNumbers() {
-	g.sortedNumbers = make([]int, len(g.numbersInfo.result))
-	copy(g.sortedNumbers, g.numbersInfo.result)
-	sort.Ints(g.sortedNumbers)
+	go g.getAllRandomNumbers(ctx, bound, flows, result, timeCh, channel...)
 }
 
 // Возвращает структуру с одним публичным методом (Generate)

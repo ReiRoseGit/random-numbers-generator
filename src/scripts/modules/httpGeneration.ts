@@ -10,7 +10,7 @@ class HttpGeneration {
     }
 
     // Генерирует и записывает данные, принимает форму и извлекает из нее параметры
-    public async getStaticNumbers(
+    public async printStaticNumbers(
         unsortedData: HTMLElement,
         sortedData: HTMLElement,
         time: HTMLElement,

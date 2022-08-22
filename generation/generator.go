@@ -17,7 +17,7 @@ type Generator struct {
 // result - срез случайных чисел
 // usedNumbers - словарь чисел, которые уже были использованы при генерации
 type information struct {
-	mutex       sync.Mutex
+	mutex       *sync.Mutex
 	result      []int
 	usedNumbers map[int]bool
 }
@@ -94,6 +94,7 @@ loop:
 func (g *Generator) Generate(ctx context.Context, result chan []int, timeCh chan time.Duration, bound, flows int, channel ...chan int) {
 	g.numbersInfo.usedNumbers = make(map[int]bool)
 	g.numbersInfo.result = []int{}
+	g.numbersInfo.mutex = &sync.Mutex{}
 	go g.getAllRandomNumbers(ctx, bound, flows, result, timeCh, channel...)
 }
 

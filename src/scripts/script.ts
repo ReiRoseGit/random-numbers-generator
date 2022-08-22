@@ -32,7 +32,7 @@ async function generateNumbers(e: SubmitEvent): Promise<void> {
         }
         // Ветка для статичного вывода чисел
         else if (formElem) {
-            httpGen.getStaticNumbers(unsortedData, sortedData, time, formElem)
+            httpGen.printStaticNumbers(unsortedData, sortedData, time, formElem)
         }
     }
 }

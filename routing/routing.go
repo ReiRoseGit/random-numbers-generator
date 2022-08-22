@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"random-numbers-generator/basing"
 	"random-numbers-generator/generation"
 
 	"github.com/gorilla/websocket"
@@ -16,9 +17,11 @@ import (
 
 // generator - объект-генератор
 // numberInfo - информация о текущем сгенерированном срезе
+// db - база данных в виде json
 type numberGenerator struct {
 	generator  generation.Generator
 	numberInfo NumbersInformation
+	db         basing.Driver
 }
 
 // Структура, которая в последующем будет преобразовываться в JSON
@@ -36,17 +39,20 @@ type Params struct {
 
 // Конструктор генератора, вызывается один раз в пакете main
 func NewNumberGenerator() numberGenerator {
-	return numberGenerator{generator: generation.NewGenerator(), numberInfo: NumbersInformation{}}
+	return numberGenerator{generator: generation.NewGenerator(), numberInfo: NumbersInformation{}, db: *basing.New("db.json")}
 }
 
-// Статически генерирует JSON файл
+// Статически генерирует JSON файл, записывает последнюю генерацию в БД
 func (ng *numberGenerator) writeHttpJSON(ctx context.Context, w http.ResponseWriter, r *http.Request, bound, flows int) {
 	var js []byte
 	unsortedChannel := make(chan []int)
 	timeChannel := make(chan time.Duration)
 	go ng.generator.Generate(ctx, unsortedChannel, timeChannel, bound, flows)
-	result := <-unsortedChannel
-	js, _ = json.Marshal(&NumbersInformation{UnsortedNumbers: result, SortedNumbers: sortSlice(result), Time: <-timeChannel})
+	unsortedSlice := <-unsortedChannel
+	generationTime := <-timeChannel
+	sortedSlice := sortSlice(unsortedSlice)
+	ng.db.AddJSON(unsortedSlice, sortedSlice, generationTime, time.Now().Format("01-02-2006 15:04:05"))
+	js, _ = json.Marshal(&NumbersInformation{UnsortedNumbers: unsortedSlice, SortedNumbers: sortedSlice, Time: generationTime})
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
 }
@@ -120,7 +126,7 @@ loop:
 	}
 	// Если соединение не было прервано
 	if len(unsorted) != 0 {
-		ng.WriteWebsocketJSON(connection, <-timeChannel, unsorted)
+		ng.writeWebsocketJSON(connection, <-timeChannel, unsorted)
 	}
 	ng.clearChannels(liveChannel, unsortedChannel)
 }
@@ -142,8 +148,11 @@ func sortSlice(unsorted []int) []int {
 	return sorted
 }
 
-// Вызывает функцию получения отсортированного среза и записывает все данные в JSON, затем отправляет его клиенту
-func (ng *numberGenerator) WriteWebsocketJSON(connection *websocket.Conn, time time.Duration, unsorted []int) {
-	js, _ := json.Marshal(&NumbersInformation{UnsortedNumbers: unsorted, SortedNumbers: sortSlice(unsorted), Time: time})
+// Вызывает функцию получения отсортированного среза и записывает все данные в JSON, затем отправляет его клиенту, записывает последнюю генерацию в БД
+func (ng *numberGenerator) writeWebsocketJSON(connection *websocket.Conn, t time.Duration, unsorted []int) {
+	sorted := sortSlice(unsorted)
+	data := NumbersInformation{UnsortedNumbers: unsorted, SortedNumbers: sorted, Time: t}
+	ng.db.AddJSON(unsorted, sorted, t, time.Now().Format("01-02-2006 15:04:05"))
+	js, _ := json.Marshal(&data)
 	connection.WriteMessage(1, js)
 }

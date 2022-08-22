@@ -33,33 +33,33 @@ func New(path string) *Driver {
 
 // Читает данные из файла и добавляет новое значение, при необходимости удаляя первый элемент
 func (db *Driver) AddJSON(unsorted, sorted []int, time time.Duration, created string) {
-	generations := db.getAllJSON()
+	allGenerations := db.getAllJSON()
 	newGeneration := Generation{UnsortedNumbers: unsorted, SortedNumbers: sorted, Time: time, CreatedAt: created}
-	if length := len(generations); length < SIZE {
-		generations = append(generations, newGeneration)
-		rawDataOut, _ := json.MarshalIndent(&generations, "", "  ")
+	if length := len(allGenerations.Generations); length < SIZE {
+		allGenerations.Generations = append(allGenerations.Generations, newGeneration)
+		rawDataOut, _ := json.MarshalIndent(&allGenerations, "", "  ")
 		_ = ioutil.WriteFile(db.path, rawDataOut, 0)
 	} else {
-		copy(generations[0:], generations[1:])
-		generations[length-1] = Generation{}
-		generations = generations[:length-1]
-		generations = append(generations, newGeneration)
-		rawDataOut, _ := json.MarshalIndent(&generations, "", "  ")
+		copy(allGenerations.Generations[0:], allGenerations.Generations[1:])
+		allGenerations.Generations[length-1] = Generation{}
+		allGenerations.Generations = allGenerations.Generations[:length-1]
+		allGenerations.Generations = append(allGenerations.Generations, newGeneration)
+		rawDataOut, _ := json.MarshalIndent(&allGenerations, "", "  ")
 		_ = ioutil.WriteFile(db.path, rawDataOut, 0)
 	}
 }
 
 // Возвращает срез всех JSON файлов в db.json
-func (db *Driver) getAllJSON() []Generation {
+func (db *Driver) getAllJSON() JSON {
 	rawDataIn, _ := ioutil.ReadFile(db.path)
 	var allGenerations JSON
 	_ = json.Unmarshal(rawDataIn, &allGenerations)
-	return allGenerations.Generations
+	return allGenerations
 }
 
 // Возвращает JSON, готовый для передачи на фронт
-func (db *Driver) GetAllMarshaledJSON() []byte {
-	generations := db.getAllJSON()
-	rawDataOut, _ := json.MarshalIndent(&generations, "", "  ")
-	return rawDataOut
-}
+// func (db *Driver) GetAllMarshaledJSON() []byte {
+// 	generations := db.getAllJSON().Generations
+// 	rawDataOut, _ := json.Marshal(&generations)
+// 	return rawDataOut
+// }

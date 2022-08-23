@@ -35,6 +35,9 @@ function content(): void {
     // Кнопка закрытия модального окна
     const modalBtn: htmlEl = document.getElementById('modal_close__btn') as HTMLElement
 
+    // span, появляющийся при закрытии соединения
+    const generationCloseSpan: htmlEl = document.getElementById('form_close') as HTMLElement
+
     // Обрабатывает отправку формы на генерацию случайных чисел.
     // Если параметры конкретные, то добавляет содержимое в контейнеры
     // иначе вызывает функцию проверки и изменения некорректных значений
@@ -73,10 +76,15 @@ function content(): void {
         modal.style.display = 'block'
     })
 
-    // Обработчик закрытия кнопки
+    // Обработчик закрытия модального окна
     modalBtn.addEventListener('click', (): void => {
         modal.style.display = 'none'
         document.body.style.overflow = 'auto'
+        deleteButton.setAttribute('disabled', 'true')
+        generationCloseSpan.style.display = 'block'
+        Array.from([]).forEach.call(formElem, (elem: HTMLElement): void => {
+            elem.setAttribute('disabled', 'true')
+        })
     })
 }
 

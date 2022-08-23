@@ -21,7 +21,8 @@ module.exports = {
                 enforce: 'pre',
                 test: /\.ts?$/,
                 use: "tslint-loader"
-            }
+            },
+            { test: /\.css$/, use: [ 'style-loader', 'css-loader' ] }
         ]
     },
     plugins: [

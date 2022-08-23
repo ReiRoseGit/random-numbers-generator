@@ -1,10 +1,10 @@
 class Validation {
     // Выполняет проверку недопустимых параметров и назначает классы недопустимым значениям инпутов
     public static cleanParams(bound: HTMLInputElement, flows: HTMLInputElement): boolean {
-        this.cleandOutputFields(bound, flows)
+        this.cleanOutputFields(bound, flows)
         try {
             this.isCorrectValues(bound, flows)
-            this.cleandOutputFields(bound, flows)
+            this.cleanOutputFields(bound, flows)
             return true
         } catch (e) {
             return false
@@ -30,7 +30,8 @@ class Validation {
         }
     }
 
-    private static cleandOutputFields(...fields: HTMLInputElement[]): void {
+    // Очистка полей
+    private static cleanOutputFields(...fields: HTMLInputElement[]): void {
         fields.forEach((element: HTMLInputElement): void => element.classList.remove('is-invalid'))
     }
 }

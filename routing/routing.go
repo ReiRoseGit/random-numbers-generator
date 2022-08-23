@@ -162,8 +162,10 @@ func (ng *numberGenerator) writeWebsocketJSON(connection *websocket.Conn, t time
 func (ng *numberGenerator) HistoryHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		w.Write(ng.db.GetAllMarshaledJSON())
+	} else if r.Method == http.MethodDelete {
+		ng.db.ClearDataBase()
 	} else {
-		http.Error(w, fmt.Sprintf("expect method Get, got %v", r.Method), http.StatusMethodNotAllowed)
+		http.Error(w, fmt.Sprintf("expect method Get or Delete, got %v", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
 }

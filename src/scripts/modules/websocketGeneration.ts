@@ -1,4 +1,4 @@
-import { GeneratedNumbers, LastGeneratedNumbers } from './interfaces'
+import { GeneratedNumbers } from './interfaces'
 import { Output } from './output'
 
 // Класс, реализующий генерацию чисел по вебсокету
@@ -27,17 +27,17 @@ class WebsocketGeneration {
         accordion: HTMLElement
     ): void {
         unsortedData.innerHTML = sortedData.innerHTML = time.innerHTML = ''
-        this.websocket.addEventListener('message', (e: MessageEvent): void => {
+        this.websocket.onmessage = (e: MessageEvent): void => {
             if (e.data.includes('created_at')) {
                 Output.getAndPrintHistory(accordion, '/history')
-            } else if (!e.data.includes('created_at') && e.data.includes('time')) {
+            } else if (e.data.includes('time')) {
                 const js: GeneratedNumbers = JSON.parse(e.data)
                 sortedData.innerHTML = Output.outputNumbers(js.sorted_numbers)
                 time.innerHTML = js.time + ' ns'
-            } else if (!e.data.includes('created_at')) {
+            } else {
                 unsortedData.innerHTML += e.data + ' '
             }
-        })
+        }
     }
 
     // Запускает генерацию и запись чисел по вебсокету

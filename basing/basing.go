@@ -63,3 +63,8 @@ func (db *Driver) GetAllMarshaledJSON() []byte {
 	rawDataOut, _ := json.Marshal(&generations)
 	return rawDataOut
 }
+
+// Очищает базу данных генераций
+func (db *Driver) ClearDataBase() {
+	_ = ioutil.WriteFile(db.path, []byte(`{"generations": []}`), 0)
+}

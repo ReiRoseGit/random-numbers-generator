@@ -21,6 +21,9 @@ const ws: WebsocketGeneration = new WebsocketGeneration('ws://localhost:3000/ws'
 // Создание объекта класса для статического вывода данных
 const httpGen: HttpGeneration = new HttpGeneration('/numbers')
 
+// Кнопка для удаления списка генераций
+const deleteButton: htmlEl = document.getElementById('db_delete') as HTMLElement
+
 // Обрабатывает отправку формы на генерацию случайных чисел.
 // Если параметры конкретные, то добавляет содержимое в контейнеры
 // иначе вызывает функцию проверки и изменения некорректных значений
@@ -43,4 +46,12 @@ async function generateNumbers(e: SubmitEvent): Promise<void> {
 
 // Слушатель событий на кнопку при загрузке страницы
 document.addEventListener('DOMContentLoaded', (): void => formElem.addEventListener('submit', generateNumbers))
+// Вывод информации о последних генерациях
 document.addEventListener('DOMContentLoaded', (): Promise<void> => Output.getAndPrintHistory(accordion, '/history'))
+// Обработчик на кнопку сброса всех предыдущих генераций
+document.addEventListener('DOMContentLoaded', (): void => {
+    deleteButton.addEventListener('click', (): void => {
+        Output.clearDataBase('/history')
+        Output.getAndPrintHistory(accordion, '/history')
+    })
+})

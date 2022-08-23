@@ -24,15 +24,16 @@ class WebsocketGeneration {
         unsortedData: HTMLElement,
         sortedData: HTMLElement,
         time: HTMLElement,
-        accordion: HTMLElement
+        accordion: HTMLElement,
+        output: Output
     ): void {
         unsortedData.innerHTML = sortedData.innerHTML = time.innerHTML = ''
         this.websocket.onmessage = (e: MessageEvent): void => {
             if (e.data.includes('created_at')) {
-                Output.getAndPrintHistory(accordion, '/history')
+                output.getAndPrintHistory(accordion, '/history')
             } else if (e.data.includes('time')) {
                 const js: GeneratedNumbers = JSON.parse(e.data)
-                sortedData.innerHTML = Output.outputNumbers(js.sorted_numbers)
+                sortedData.innerHTML = output.outputNumbers(js.sorted_numbers)
                 time.innerHTML = js.time + ' ns'
             } else {
                 unsortedData.innerHTML += e.data + ' '
@@ -47,10 +48,11 @@ class WebsocketGeneration {
         unsortedData: HTMLElement,
         sortedData: HTMLElement,
         time: HTMLElement,
-        accordion: HTMLElement
+        accordion: HTMLElement,
+        output: Output
     ): void {
         this.getDynamicNumbers(boundValue, flowsValue)
-        this.setFieldsAndData(unsortedData, sortedData, time, accordion)
+        this.setFieldsAndData(unsortedData, sortedData, time, accordion, output)
     }
 }
 

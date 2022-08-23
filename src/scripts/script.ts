@@ -26,6 +26,15 @@ function content(): void {
     // Кнопка для удаления списка генераций
     const deleteButton: htmlEl = document.getElementById('db_delete') as HTMLElement
 
+    // Форматированный вывод данных
+    const output: Output = new Output()
+
+    // Модальное окно (по умолчанию скрыто)
+    const modal: htmlEl = document.getElementById('modal') as HTMLElement
+
+    // Кнопка закрытия модального окна
+    const modalBtn: htmlEl = document.getElementById('modal_close__btn') as HTMLElement
+
     // Обрабатывает отправку формы на генерацию случайных чисел.
     // Если параметры конкретные, то добавляет содержимое в контейнеры
     // иначе вызывает функцию проверки и изменения некорректных значений
@@ -37,11 +46,11 @@ function content(): void {
             const checkBox: HTMLInputElement | null = document.querySelector('#exampleCheck1')
             // Ветка для динамического вывода чисел
             if (checkBox && checkBox.checked && accordion) {
-                ws.printDynamicNumbers(bound.value, flows.value, unsortedData, sortedData, time, accordion)
+                ws.printDynamicNumbers(bound.value, flows.value, unsortedData, sortedData, time, accordion, output)
             }
             // Ветка для статичного вывода чисел
             else if (formElem && accordion) {
-                httpGen.printStaticNumbers(unsortedData, sortedData, time, formElem, accordion)
+                httpGen.printStaticNumbers(unsortedData, sortedData, time, formElem, accordion, output)
             }
         }
     }
@@ -50,19 +59,13 @@ function content(): void {
     formElem.addEventListener('submit', generateNumbers)
 
     // Выводит данные о прошлых генерациях в аккордеон
-    Output.getAndPrintHistory(accordion, '/history')
+    output.getAndPrintHistory(accordion, '/history')
 
     // Обработчик событий на button удаления истории генераций
     deleteButton.addEventListener('click', (): void => {
-        Output.clearDataBase('/history')
-        Output.getAndPrintHistory(accordion, '/history')
+        output.clearDataBase('/history')
+        output.getAndPrintHistory(accordion, '/history')
     })
-
-    // Модальное окно (по умолчанию скрыто)
-    const modal: htmlEl = document.getElementById('modal') as HTMLElement
-
-    // Кнопка закрытия модального окна
-    const modalBtn: htmlEl = document.getElementById('modal_close__btn') as HTMLElement
 
     // Обработчик на закрытие соединения
     ws.websocket.addEventListener('close', (): void => {

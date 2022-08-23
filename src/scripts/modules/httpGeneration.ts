@@ -15,11 +15,12 @@ class HttpGeneration {
         sortedData: HTMLElement,
         time: HTMLElement,
         formElem: HTMLFormElement,
-        accordion: HTMLElement
+        accordion: HTMLElement,
+        output: Output
     ): Promise<void> {
         const js: GeneratedNumbers = await this.getStaticJSON(formElem)
-        this.writeData(unsortedData, sortedData, time, js)
-        Output.getAndPrintHistory(accordion, '/history')
+        this.writeData(unsortedData, sortedData, time, js, output)
+        output.getAndPrintHistory(accordion, '/history')
     }
 
     // Отправляет post запрос и возвращает json
@@ -36,10 +37,11 @@ class HttpGeneration {
         unsortedData: HTMLElement,
         sortedData: HTMLElement,
         time: HTMLElement,
-        js: GeneratedNumbers
+        js: GeneratedNumbers,
+        output: Output
     ): void {
-        unsortedData.innerHTML = Output.outputNumbers(js.unsorted_numbers)
-        sortedData.innerHTML = Output.outputNumbers(js.sorted_numbers)
+        unsortedData.innerHTML = output.outputNumbers(js.unsorted_numbers)
+        sortedData.innerHTML = output.outputNumbers(js.sorted_numbers)
         time.innerHTML = js.time + ' ns'
     }
 }

@@ -1,6 +1,5 @@
 import { GeneratedNumbers } from './interfaces'
 import { Output } from './output'
-import { Xml } from './xml'
 
 class HttpGeneration {
     // Адрес, на который необходимо делать пост запрос
@@ -16,12 +15,11 @@ class HttpGeneration {
         sortedData: HTMLElement,
         time: HTMLElement,
         formElem: HTMLFormElement,
-        xml: Xml,
         accordion: HTMLElement
     ): Promise<void> {
         const js: GeneratedNumbers = await this.getStaticJSON(formElem)
         this.writeData(unsortedData, sortedData, time, js)
-        xml.getLastGenerations(accordion)
+        Output.getAndPrintHistory(accordion, '/history')
     }
 
     // Отправляет post запрос и возвращает json

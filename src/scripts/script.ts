@@ -2,13 +2,10 @@ import { Validation } from './modules/validation'
 import { HttpGeneration } from './modules/httpGeneration'
 import { WebsocketGeneration } from './modules/websocketGeneration'
 import { htmlEl } from './modules/types'
-import { Xml } from './modules/xml'
+import { Output } from './modules/output'
 
 // Вся форма для ввода параметров
 const formElem: HTMLFormElement | null = document.getElementById('formElem') as HTMLFormElement
-
-// xml для получения истории
-const xml: Xml = new Xml()
 
 // Поля для вывода данных
 const unsortedData: htmlEl = document.getElementById('data__unsorted')
@@ -35,28 +32,15 @@ async function generateNumbers(e: SubmitEvent): Promise<void> {
         const checkBox: HTMLInputElement | null = document.querySelector('#exampleCheck1')
         // Ветка для динамического вывода чисел
         if (checkBox && checkBox.checked && accordion) {
-            ws.printDynamicNumbers(bound.value, flows.value, unsortedData, sortedData, time, xml, accordion)
-            // xml.getLastGenerations(accordion)
+            ws.printDynamicNumbers(bound.value, flows.value, unsortedData, sortedData, time, accordion)
         }
         // Ветка для статичного вывода чисел
         else if (formElem && accordion) {
-            httpGen.printStaticNumbers(unsortedData, sortedData, time, formElem, xml, accordion)
-            // xml.getLastGenerations(accordion)
+            httpGen.printStaticNumbers(unsortedData, sortedData, time, formElem, accordion)
         }
     }
 }
 
-xml.getLastGenerations(accordion)
-
-accordion.addEventListener('click', (e: MouseEvent): void => {
-    console.log(e.target)
-})
-
-// Отключает стандартное поведение кнопки
-if (formElem) {
-    formElem.onsubmit = (e: SubmitEvent): void => e.preventDefault()
-}
-
-document.addEventListener('DOMContentLoaded', (): void => {
-    if (formElem) formElem.onsubmit = generateNumbers // todo
-})
+// Слушатель событий на кнопку при загрузке страницы
+document.addEventListener('DOMContentLoaded', (): void => formElem.addEventListener('submit', generateNumbers))
+document.addEventListener('DOMContentLoaded', (): Promise<void> => Output.getAndPrintHistory(accordion, '/history'))

@@ -1,6 +1,5 @@
 import { GeneratedNumbers, LastGeneratedNumbers } from './interfaces'
 import { Output } from './output'
-import { Xml } from './xml'
 
 // Класс, реализующий генерацию чисел по вебсокету
 class WebsocketGeneration {
@@ -21,17 +20,24 @@ class WebsocketGeneration {
     }
 
     // Принимает поля для записи готовых данных, назначает обработчик, записывающий данные в эти поля
-    private setFieldsAndData(unsortedData: HTMLElement, sortedData: HTMLElement, time: HTMLElement): void {
+    private setFieldsAndData(
+        unsortedData: HTMLElement,
+        sortedData: HTMLElement,
+        time: HTMLElement,
+        accordion: HTMLElement
+    ): void {
         unsortedData.innerHTML = sortedData.innerHTML = time.innerHTML = ''
-        this.websocket.onmessage = (e: MessageEvent): void => {
-            if (!e.data.includes('created_at') && e.data.includes('time')) {
+        this.websocket.addEventListener('message', (e: MessageEvent): void => {
+            if (e.data.includes('created_at')) {
+                Output.getAndPrintHistory(accordion, '/history')
+            } else if (!e.data.includes('created_at') && e.data.includes('time')) {
                 const js: GeneratedNumbers = JSON.parse(e.data)
                 sortedData.innerHTML = Output.outputNumbers(js.sorted_numbers)
-                time.innerHTML = js.time + 'ns'
+                time.innerHTML = js.time + ' ns'
             } else if (!e.data.includes('created_at')) {
                 unsortedData.innerHTML += e.data + ' '
             }
-        }
+        })
     }
 
     // Запускает генерацию и запись чисел по вебсокету
@@ -41,12 +47,10 @@ class WebsocketGeneration {
         unsortedData: HTMLElement,
         sortedData: HTMLElement,
         time: HTMLElement,
-        xml: Xml,
         accordion: HTMLElement
     ): void {
         this.getDynamicNumbers(boundValue, flowsValue)
-        this.setFieldsAndData(unsortedData, sortedData, time)
-        xml.getLastGenerations(accordion)
+        this.setFieldsAndData(unsortedData, sortedData, time, accordion)
     }
 }
 

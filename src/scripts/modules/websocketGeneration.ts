@@ -1,5 +1,6 @@
-import { GeneratedNumbers } from './interfaces'
+import { GeneratedNumbers, LastGeneratedNumbers } from './interfaces'
 import { Output } from './output'
+import { Xml } from './xml'
 
 // Класс, реализующий генерацию чисел по вебсокету
 class WebsocketGeneration {
@@ -23,11 +24,11 @@ class WebsocketGeneration {
     private setFieldsAndData(unsortedData: HTMLElement, sortedData: HTMLElement, time: HTMLElement): void {
         unsortedData.innerHTML = sortedData.innerHTML = time.innerHTML = ''
         this.websocket.onmessage = (e: MessageEvent): void => {
-            if (e.data.includes('time')) {
+            if (!e.data.includes('created_at') && e.data.includes('time')) {
                 const js: GeneratedNumbers = JSON.parse(e.data)
                 sortedData.innerHTML = Output.outputNumbers(js.sorted_numbers)
                 time.innerHTML = js.time + 'ns'
-            } else {
+            } else if (!e.data.includes('created_at')) {
                 unsortedData.innerHTML += e.data + ' '
             }
         }
@@ -39,10 +40,13 @@ class WebsocketGeneration {
         flowsValue: string,
         unsortedData: HTMLElement,
         sortedData: HTMLElement,
-        time: HTMLElement
+        time: HTMLElement,
+        xml: Xml,
+        accordion: HTMLElement
     ): void {
         this.getDynamicNumbers(boundValue, flowsValue)
         this.setFieldsAndData(unsortedData, sortedData, time)
+        xml.getLastGenerations(accordion)
     }
 }
 

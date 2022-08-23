@@ -5,4 +5,8 @@ interface GeneratedNumbers {
     time: string
 }
 
-export { GeneratedNumbers }
+interface LastGeneratedNumbers extends GeneratedNumbers {
+    created_at: string
+}
+
+export { GeneratedNumbers, LastGeneratedNumbers }

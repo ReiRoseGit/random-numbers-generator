@@ -155,4 +155,15 @@ func (ng *numberGenerator) writeWebsocketJSON(connection *websocket.Conn, t time
 	ng.db.AddJSON(unsorted, sorted, t, time.Now().Format("01-02-2006 15:04:05"))
 	js, _ := json.Marshal(&data)
 	connection.WriteMessage(1, js)
+	connection.WriteMessage(1, ng.db.GetAllMarshaledJSON())
+}
+
+// Обрабатывает get запрос к базе данных и возвращает историю запросов
+func (ng *numberGenerator) HistoryHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		w.Write(ng.db.GetAllMarshaledJSON())
+	} else {
+		http.Error(w, fmt.Sprintf("expect method Get, got %v", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
 }

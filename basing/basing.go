@@ -58,8 +58,8 @@ func (db *Driver) getAllJSON() JSON {
 }
 
 // Возвращает JSON, готовый для передачи на фронт
-// func (db *Driver) GetAllMarshaledJSON() []byte {
-// 	generations := db.getAllJSON().Generations
-// 	rawDataOut, _ := json.Marshal(&generations)
-// 	return rawDataOut
-// }
+func (db *Driver) GetAllMarshaledJSON() []byte {
+	generations := db.getAllJSON().Generations
+	rawDataOut, _ := json.Marshal(&generations)
+	return rawDataOut
+}

@@ -3,6 +3,7 @@ package basing
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -28,6 +29,10 @@ type Generation struct {
 const SIZE = 10
 
 func New(path string) *Driver {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.Create(path)
+		ioutil.WriteFile(path, []byte(`{"generations": []}`), 0)
+	}
 	return &Driver{path: path}
 }
 

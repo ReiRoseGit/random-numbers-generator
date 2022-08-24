@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "concurrently": "^7.3.0",
     "css-loader": "^6.7.1",
     "css-minimizer-webpack-plugin": "^4.0.0",
     "html-webpack-plugin": "^5.5.0",
@@ -21,8 +22,11 @@
   "main": "index.js",
   "scripts": {
     "lint": "tslint --project ./tslint.json",
-    "dev": "webpack --env development",
-    "prod": "webpack --env production"
+    "dev": "npm run clean | npm run development",
+    "prod" : "npm run clean | npm run production",
+    "development": "webpack --env development",
+    "production": "webpack --env production",
+    "clean": "rimraf dist"
   },
   "repository": {
     "type": "git",

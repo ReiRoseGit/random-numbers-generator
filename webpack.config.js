@@ -54,7 +54,7 @@ module.exports = (env) => {
             entry: './src/scripts/script.ts',
             output: {
                 path: path.resolve(__dirname, 'dist'),
-                filename: '[name].js',
+                filename: (env === 'dev') ? 'name.js' : '[hash].js',
             },
             resolve: {
                 extensions: ['.tsx', '.ts', '.js'],

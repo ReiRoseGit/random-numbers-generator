@@ -2,6 +2,8 @@ const path = require('path')
 const htmlWebpackPlugin = require('html-webpack-plugin')
 const PrettierPlugin = require('prettier-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 module.exports = (env) => {
     if (env.development) {
@@ -66,10 +68,27 @@ module.exports = (env) => {
                     { test: /\.css$/, use: [MiniCssExtractPlugin.loader, 'css-loader'] },
                 ],
             },
-            plugins: [
-                new htmlWebpackPlugin({ template: './src/public/index.html', filename: '[name].html', hash: true }),
-                new MiniCssExtractPlugin(),
-            ],
+            optimization: {
+                minimize: true,
+                minimizer: [
+                    new CssMinimizerPlugin(),
+                    new UglifyJsPlugin({
+                        uglifyOptions: {
+                            compress: {
+                                unsafe: true,
+                                inline: true,
+                                passes: 2,
+                                keep_fargs: false,
+                            },
+                            output: {
+                                beautify: false,
+                            },
+                            mangle: true,
+                        },
+                    }),
+                ],
+            },
+            plugins: [new htmlWebpackPlugin({ template: './src/public/index.html' }), new MiniCssExtractPlugin()],
             mode: 'production',
             devtool: 'source-map',
         }
